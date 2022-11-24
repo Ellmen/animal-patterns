@@ -22,6 +22,7 @@ def make_geometry():
 mesh = Mesh(make_geometry().GenerateMesh (maxh=5))
 
 fes = H1(mesh, order=3, dirichlet=[1], autoupdate=True)
+#fes = H1(mesh, order=3, dirichlet=[], autoupdate=True)
 u = fes.TrialFunction()
 v = fes.TestFunction()
 
@@ -34,6 +35,27 @@ a += lam*grad(u)*grad(v)*dx
 # heat-source in sub-domain
 f = LinearForm(fes)
 f += CoefficientFunction([1])*v*dx
+
+#alpha = 0.9
+#beta = -0.91
+#D = 0.516
+#delta = 2
+#r1 = 0.02
+#r2 = 0.2
+
+#f += CoefficientFunction([2, 3, 0])*v*dx
+#f += CoefficientFunction([1])*alpha*u*(1-r1*v**2) + v*(1-r2*u)*dx
+#f += CoefficientFunction([2, 3, 0])*v*(beta+alpha*r1*u*v) + u*(r2*v-alpha)
+
+
+
+
+#f += SymbolicBFI([alpha*u*(1-r1*v**2) + v*(1-r2*u), v*(beta+alpha*r1*u*v) + u*(r2*v-alpha)])
+#f += CoefficientFunction([1, 0, 0])*alpha*u*(1-r1*v**2) + v*(1-r2*u)
+#f += CoefficientFunction([0, 1, 0])*v*(beta+alpha*r1*u*v) + u*(r2*v-alpha)
+#f += CoefficientFunction()*[alpha*u*(1-r1*v**2) + v*(1-r2*u), v*(beta+alpha*r1*u*v) + u*(r2*v-alpha)]
+#f += [alpha*u*(1-r1*v**2) + v*(1-r2*u)]
+#, v*(beta+alpha*r1*u*v) + u*(r2*v-alpha)]
 
 c = MultiGridPreconditioner(a, inverse = "sparsecholesky")
 
