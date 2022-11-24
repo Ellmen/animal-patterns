@@ -2,47 +2,38 @@ from ngsolve import *
 # from ngsolve import Draw
 from netgen.geom2d import SplineGeometry
 
-def MakeGeometry():
+
+def make_geometry():
     geometry = SplineGeometry()
-    
-    # point coordinates ...
-    pnts = [ (0,0), (1,0), (1,0.6), (0,0.6), \
-             (0.2,0.6), (0.8,0.6), (0.8,0.8), (0.2,0.8), \
-             (0.5,0.15), (0.65,0.3), (0.5,0.45), (0.35,0.3) ]
+    from squid_pts import pnts
     pnums = [geometry.AppendPoint(*p) for p in pnts]
-    
-    # start-point, end-point, boundary-condition, domain on left side, domain on right side:
-    lines = [ (0,1,1,1,0), (1,2,2,1,0), (2,5,2,1,0), (5,4,2,1,2), (4,3,2,1,0), (3,0,2,1,0), \
-              (5,6,2,2,0), (6,7,2,2,0), (7,4,2,2,0), \
-              (8,9,2,3,1), (9,10,2,3,1), (10,11,2,3,1), (11,8,2,3,1) ]
-        
-    for p1,p2,bc,left,right in lines:
-        geometry.Append( ["line", pnums[p1], pnums[p2]], bc=bc, leftdomain=left, rightdomain=right)
+    for i in range(len(pnts)):
+        p1 = pnums[i]
+        p2 = pnums[i+1] if i+1 < len(pnts) else pnums[0]
+        geometry.Append(
+            ['line', p1, p2],
+            bc=1,
+            leftdomain=1,
+            rightdomain=0
+        )
     return geometry
 
 
+mesh = Mesh(make_geometry().GenerateMesh (maxh=5))
 
-# mesh = Mesh(MakeGeometry().GenerateMesh (maxh=0.2))
-mesh = Mesh(filename='squid.vol')
-# mesh.Load('squid.vol')
-
-# fes = H1(mesh, order=3, dirichlet=[1], autoupdate=True)
-fes = H1(mesh, order=1, dirichlet=[1], autoupdate=True)
+fes = H1(mesh, order=3, dirichlet=[1], autoupdate=True)
 u = fes.TrialFunction()
 v = fes.TestFunction()
 
-# one heat conductivity coefficient per sub-domain
-# lam = CoefficientFunction([1, 1000, 10])
+# one heat conductivity coefficient per sub-domain (we currently only have 1)
 lam = CoefficientFunction([1])
-# lam = CoefficientFunction([1000, 100000, 10])
 a = BilinearForm(fes, symmetric=False)
 a += lam*grad(u)*grad(v)*dx
 
 
-# heat-source in sub-domain 3
+# heat-source in sub-domain
 f = LinearForm(fes)
-# f += CoefficientFunction([0, 0, 1])*v*dx
-f += CoefficientFunction([100])*v*dx
+f += CoefficientFunction([1])*v*dx
 
 c = MultiGridPreconditioner(a, inverse = "sparsecholesky")
 
@@ -65,21 +56,21 @@ def SolveBVP():
 
 l = []
 
-def CalcError():
-    flux = lam * grad(gfu)
-    # interpolate finite element flux into H(div) space:
-    gf_flux.Set (flux)
+# def CalcError():
+#     flux = lam * grad(gfu)
+#     # interpolate finite element flux into H(div) space:
+#     gf_flux.Set (flux)
 
-    # Gradient-recovery error estimator
-    err = 1/lam*(flux-gf_flux)*(flux-gf_flux)
-    elerr = Integrate (err, mesh, VOL, element_wise=True)
+#     # Gradient-recovery error estimator
+#     err = 1/lam*(flux-gf_flux)*(flux-gf_flux)
+#     elerr = Integrate (err, mesh, VOL, element_wise=True)
 
-    maxerr = max(elerr)
-    l.append ( (fes.ndof, sqrt(sum(elerr)) ))
-    print ("maxerr = ", maxerr)
+#     maxerr = max(elerr)
+#     l.append ( (fes.ndof, sqrt(sum(elerr)) ))
+#     print ("maxerr = ", maxerr)
 
-    for el in mesh.Elements():
-        mesh.SetRefinementFlag(el, elerr[el.nr] > 0.25*maxerr)
+#     for el in mesh.Elements():
+#         mesh.SetRefinementFlag(el, elerr[el.nr] > 0.25*maxerr)
 
 
 # with TaskManager():
@@ -89,11 +80,6 @@ def CalcError():
 #         mesh.Refine()
     
 SolveBVP()
-
-# dir(Draw)
-# print(d)
-# Draw(mesh)
-
 
 # import matplotlib.pyplot as plt
 
@@ -107,5 +93,5 @@ SolveBVP()
 # plt.ion()
 # plt.show()
 
-input("<press enter to quit>")
+# input("<press enter to quit>")
 
