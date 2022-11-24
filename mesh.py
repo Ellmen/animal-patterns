@@ -15,4 +15,4 @@ with pygmsh.geo.Geometry() as geom:
 print(mesh.points)
 # mesh.points, mesh.cells, ...
 # mesh.write("mesh.vtk")
-mesh.write("mesh.msh")
+mesh.write("mesh.vol")

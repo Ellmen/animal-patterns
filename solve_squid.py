@@ -2,26 +2,6 @@ from ngsolve import *
 # from ngsolve import Draw
 from netgen.geom2d import SplineGeometry
 
-
-#   point numbers 0, 1, ... 11
-#   sub-domain numbers (1), (2), (3)
-#  
-#
-#             7-------------6
-#             |             |
-#             |     (2)     |
-#             |             |
-#      3------4-------------5------2
-#      |                           |
-#      |             11            |
-#      |           /   \           |
-#      |         10 (3) 9          |
-#      |           \   /     (1)   |
-#      |             8             |
-#      |                           |
-#      0---------------------------1
-#
-
 def MakeGeometry():
     geometry = SplineGeometry()
     
@@ -42,15 +22,19 @@ def MakeGeometry():
 
 
 
-mesh = Mesh(MakeGeometry().GenerateMesh (maxh=0.2))
+# mesh = Mesh(MakeGeometry().GenerateMesh (maxh=0.2))
+mesh = Mesh(filename='squid.vol')
+# mesh.Load('squid.vol')
 
-
-fes = H1(mesh, order=3, dirichlet=[1], autoupdate=True)
+# fes = H1(mesh, order=3, dirichlet=[1], autoupdate=True)
+fes = H1(mesh, order=1, dirichlet=[1], autoupdate=True)
 u = fes.TrialFunction()
 v = fes.TestFunction()
 
 # one heat conductivity coefficient per sub-domain
-lam = CoefficientFunction([1, 1000, 10])
+# lam = CoefficientFunction([1, 1000, 10])
+lam = CoefficientFunction([1])
+# lam = CoefficientFunction([1000, 100000, 10])
 a = BilinearForm(fes, symmetric=False)
 a += lam*grad(u)*grad(v)*dx
 
@@ -58,7 +42,7 @@ a += lam*grad(u)*grad(v)*dx
 # heat-source in sub-domain 3
 f = LinearForm(fes)
 # f += CoefficientFunction([0, 0, 1])*v*dx
-f += CoefficientFunction([2, 3, 0])*v*dx
+f += CoefficientFunction([100])*v*dx
 
 c = MultiGridPreconditioner(a, inverse = "sparsecholesky")
 
@@ -98,11 +82,11 @@ def CalcError():
         mesh.SetRefinementFlag(el, elerr[el.nr] > 0.25*maxerr)
 
 
-with TaskManager():
-    while fes.ndof < 100000:  
-        SolveBVP()
-        CalcError()
-        mesh.Refine()
+# with TaskManager():
+#     while fes.ndof < 100000:  
+#         SolveBVP()
+#         CalcError()
+#         mesh.Refine()
     
 SolveBVP()
 

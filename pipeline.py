@@ -15,6 +15,7 @@ boundary = []
 idx = 0
 for p in contours[1]:
     if idx % 4 == 0:
+        print(p[0])
         boundary.append(p[0])
     idx += 1
 
@@ -29,7 +30,7 @@ with pygmsh.geo.Geometry() as geom:
         # [p[0] for p in contours[1]],
         boundary,
         # mesh_size=0.1,
-        mesh_size=1,
+        mesh_size=5,
     )
     # mesh = geom.generate_mesh(dim=2)
     # mesh = geom.generate_mesh(algorithm=3)
@@ -37,5 +38,5 @@ with pygmsh.geo.Geometry() as geom:
 
 # print(mesh.points)
 # mesh.points, mesh.cells, ...
-mesh.write("squid.vtk")
+mesh.write("squid.vol")
 # mesh.write("mesh.msh")
